@@ -2,18 +2,22 @@
 
 
 // ================================
-// KONEKSI DATABASE
+// KONEKSI DATABASE (SQLite3)
 // ================================
 session_start();
 chdir(__DIR__);
-$db = new SQLite3(__DIR__ . 'ikankoki.sqlite');
+
+// SQLite database file
+$db_file = __DIR__ . '/ikankoki.sqlite';
+$db = new SQLite3($db_file);
+$db->busyTimeout(5000);
 $db->exec("PRAGMA foreign_keys = ON;");
 
 
 // ================================
 // TABEL ADMIN
 // ================================
-$db->exec("
+query("
     CREATE TABLE IF NOT EXISTS admin (
         idAdmin INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
@@ -23,16 +27,10 @@ $db->exec("
     )
 ");
 
-// $db->exec("
-//     UPDATE admin
-//     SET noHp = '08123456789'
-//     WHERE idAdmin = 3
-// ");
-
 // ================================
 // TABEL JENIS IKAN
 // ================================
-$db->exec("
+query("
     CREATE TABLE IF NOT EXISTS jenisIkan (
         idJenisIkan INTEGER PRIMARY KEY AUTOINCREMENT,
         jenisIkan TEXT NOT NULL
@@ -42,7 +40,7 @@ $db->exec("
 // ================================
 // TABEL IKAN
 // ================================
-$db->exec("
+query("
     CREATE TABLE IF NOT EXISTS ikan (
         idIkan INTEGER PRIMARY KEY AUTOINCREMENT,
         idJenisIkan INTEGER NOT NULL,
@@ -52,35 +50,35 @@ $db->exec("
         harga INTEGER,
         deskripsi TEXT,
         gambarIkan TEXT,
-        FOREIGN KEY(idJenisIkan) REFERENCES JenisIkan(idJenisIkan) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY(idJenisIkan) REFERENCES jenisIkan(idJenisIkan) ON UPDATE CASCADE ON DELETE CASCADE
     )
 ");
 
 // ================================
 // TABEL PENJUALAN
 // ================================
-$db->exec("
+query("
     CREATE TABLE IF NOT EXISTS penjualan (
         idPenjualan INTEGER PRIMARY KEY AUTOINCREMENT,
         tanggalPenjualan TEXT NOT NULL,
         totalHarga INTEGER,
         statusPenjualan TEXT,
         idAdmin INTEGER NOT NULL,
-        FOREIGN KEY(idAdmin) REFERENCES Admin(idAdmin) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY(idAdmin) REFERENCES admin(idAdmin) ON UPDATE CASCADE ON DELETE CASCADE
     )
 ");
 
 // ================================
 // TABEL SUB PENJUALAN
 // ================================
-$db->exec("
+query("
     CREATE TABLE IF NOT EXISTS subPenjualan (
         idSubPenjualan INTEGER PRIMARY KEY AUTOINCREMENT,
         idPenjualan INTEGER NOT NULL,
         idIkan INTEGER NOT NULL,
         jumlahPembelian INTEGER NOT NULL,
-        FOREIGN KEY(idPenjualan) REFERENCES Penjualan(idPenjualan) ON UPDATE CASCADE ON DELETE CASCADE,
-        FOREIGN KEY(idIkan) REFERENCES Ikan(idIkan) ON UPDATE CASCADE ON DELETE CASCADE
+        FOREIGN KEY(idPenjualan) REFERENCES penjualan(idPenjualan) ON UPDATE CASCADE ON DELETE CASCADE,
+        FOREIGN KEY(idIkan) REFERENCES ikan(idIkan) ON UPDATE CASCADE ON DELETE CASCADE
     )
 ");
 
@@ -135,7 +133,7 @@ $db->exec("
 function query($sql) {
     global $db;
 
-    if (stripos($sql, 'select') === 0) {
+    if (stripos(trim($sql), 'select') === 0) {
         $result = $db->query($sql);
         $rows = [];
 
@@ -149,12 +147,12 @@ function query($sql) {
     }
 }
 // $hash = password_hash("admin", PASSWORD_DEFAULT);
-// $db->exec("
+// query("
 //     INSERT INTO admin (username, name, password)
 //     VALUES ('admin', 'Administrator', '$hash')
 // ");
 
-$db->exec("
+query("
     CREATE TABLE IF NOT EXISTS tabel_gambar (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nama_file TEXT NOT NULL,
@@ -202,7 +200,7 @@ function uploadGambar($file, $folder = '../assets/img/ikan/') {
     return ['status' => true, 'file' => $namaFile];
 }
 
-$db->exec("
+query("
     CREATE TABLE IF NOT EXISTS rating (
         idRating INTEGER PRIMARY KEY AUTOINCREMENT,
         lokasi TEXT NOT NULL,

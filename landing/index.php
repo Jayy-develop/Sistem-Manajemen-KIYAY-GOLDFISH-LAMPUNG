@@ -1,10 +1,8 @@
 <?php
 
 require '../function/koneksi.php';
-$admin = query("SELECT * FROM admin WHERE idAdmin = 3")[0];
-
-
-
+$admins = query("SELECT * FROM admin WHERE idAdmin = 3");
+$admin = !empty($admins) ? $admins[0] : ['noHp' => '08123456789'];
 
 ?>
 
